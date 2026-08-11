@@ -2,6 +2,8 @@
 
 :root {
   /* Palette sampled deliberately from the supplied walnut, cane and brass reference. unslop-ignore */
+  --font-display: "Avenir Next", "Trebuchet MS", sans-serif;
+  --font-body: "PingFang SC", "Microsoft YaHei", sans-serif;
   --plywood: #d7b982;
   --paper: #f0e7d6;
   --walnut: #2f1d15;
