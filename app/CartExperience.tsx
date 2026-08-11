@@ -456,7 +456,6 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
 function Scene({ progressRef, pointerRef }: { progressRef: ProgressRef; pointerRef: PointerRef }) {
   return (
     <>
-      <color attach="background" args={["#d7b982"]} />
       <fog attach="fog" args={["#d7b982", 9, 17]} />
       <ambientLight intensity={1.7} color="#fff0d3" />
       <directionalLight position={[-4, 7, 5]} intensity={3.8} color="#fff0d0" castShadow shadow-mapSize={[1024, 1024]} />
@@ -504,6 +503,8 @@ export default function CartExperience() {
 
       <section className="cart-story" id="top" ref={storyRef} aria-label="MORI 移动边柜拆解展示">
         <div className="story-sticky">
+          <div className="living-room-backdrop" aria-hidden="true" />
+
           <header className="site-header">
             <a className="wordmark" href="#top" aria-label="MORI 首页" onClick={() => scrollToChapter(0)}>MORI</a>
             <div className="header-note">OBJECTS FOR A MOVING HOME</div>
@@ -515,7 +516,7 @@ export default function CartExperience() {
               camera={{ position: [0, 0.15, 8.7], fov: 35 }}
               dpr={[1, 1.6]}
               shadows
-              gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+              gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
             >
               <Scene progressRef={progressRef} pointerRef={pointerRef} />
             </Canvas>

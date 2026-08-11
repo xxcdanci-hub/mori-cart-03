@@ -45,6 +45,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
+      <head>
+        <link rel="preload" as="image" href="hero-living-room-v1.jpg" fetchPriority="high" />
+      </head>
       <body className={`${display.variable} ${body.variable}`}>{children}</body>
     </html>
   );
