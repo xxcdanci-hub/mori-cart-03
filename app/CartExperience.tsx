@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import * as THREE from "three";
@@ -221,6 +221,7 @@ function CartModel({ progressRef }: { progressRef: ProgressRef }) {
   const caster = useRef<THREE.Group>(null);
   const frame = useRef<THREE.Group>(null);
   const reducedMotion = useRef(false);
+  const viewportWidth = useThree((state) => state.size.width);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -241,8 +242,16 @@ function CartModel({ progressRef }: { progressRef: ProgressRef }) {
     const wheelT = smoothRange(p, 0.6, 0.78) * returnFactor;
     const frameT = smoothRange(p, 0.72, 0.86) * returnFactor;
     const damping = reducedMotion.current ? 40 : 8;
+    const isMobile = viewportWidth < 900;
 
     if (root.current) {
+      const targetX = isMobile ? 0 : p < 0.14 ? 1.45 : -1.22;
+      const targetY = isMobile ? 0.72 : -0.2;
+      const targetScale = isMobile ? 0.7 : 0.82;
+      root.current.position.x = THREE.MathUtils.damp(root.current.position.x, targetX, damping, delta);
+      root.current.position.y = THREE.MathUtils.damp(root.current.position.y, targetY, damping, delta);
+      const nextScale = THREE.MathUtils.damp(root.current.scale.x, targetScale, damping, delta);
+      root.current.scale.setScalar(nextScale);
       root.current.rotation.y = THREE.MathUtils.damp(
         root.current.rotation.y,
         -0.34 + p * 0.65 + (reducedMotion.current ? 0 : Math.sin(state.clock.elapsedTime * 0.35) * 0.025),
@@ -283,7 +292,7 @@ function CartModel({ progressRef }: { progressRef: ProgressRef }) {
   });
 
   return (
-    <group ref={root} scale={0.86} position={[0, -0.2, 0]}>
+    <group ref={root} scale={0.82} position={[1.45, -0.2, 0]}>
       <group ref={rail} position={[0, 0, 0]}>
         <BrassRod position={[-1.74, 2.08, -0.64]} length={1.28} />
         <BrassRod position={[1.74, 2.08, -0.64]} length={1.28} />
