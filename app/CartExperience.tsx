@@ -176,6 +176,18 @@ function BrassRod({
   );
 }
 
+function PushHandle() {
+  return (
+    <group name="pushHandle">
+      <BrassRod position={[-2.12, 2.72, 0.64]} length={0.82} rotation={[0, 0, Math.PI / 2]} />
+      <mesh position={[-2.53, 2.72, 0.64]} rotation={[0, 0, Math.PI / 2]} castShadow>
+        <cylinderGeometry args={[0.075, 0.075, 0.54, 18]} />
+        <meshStandardMaterial color="#2f2119" roughness={0.72} />
+      </mesh>
+    </group>
+  );
+}
+
 function RattanPanel({ width = 1.2, height = 1.2 }: { width?: number; height?: number }) {
   const verticals = Array.from({ length: 9 }, (_, index) => -width / 2 + 0.1 + index * ((width - 0.2) / 8));
   const horizontals = Array.from({ length: 7 }, (_, index) => -height / 2 + 0.1 + index * ((height - 0.2) / 6));
@@ -363,10 +375,7 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
         <BrassRod position={[0, 2.72, 0.64]} length={3.48} rotation={[0, 0, Math.PI / 2]} />
         <BrassRod position={[-1.74, 2.72, 0]} length={1.28} rotation={[Math.PI / 2, 0, 0]} />
         <BrassRod position={[1.74, 2.72, 0]} length={1.28} rotation={[Math.PI / 2, 0, 0]} />
-        <mesh position={[-1.75, 2.78, -0.1]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.075, 0.075, 0.72, 18]} />
-          <meshStandardMaterial color="#2f2119" roughness={0.7} />
-        </mesh>
+        <PushHandle />
       </group>
 
       <group ref={topShelf} position={[0, 0, 0]}>
@@ -389,11 +398,15 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
       <group ref={leftCabinet}><CabinetPod side={-1} /></group>
       <group ref={rightCabinet}><CabinetPod side={1} /></group>
 
-      <group ref={bigWheel} position={[0, 0, 0]}>
-        <group position={[1.98, -1.65, 0.78]}><Wheel /></group>
+      <group ref={bigWheel} name="largeWheelModule" position={[0, 0, 0]}>
+        <mesh position={[1.12, -1.46, 0.71]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.11, 0.11, 0.42, 24]} />
+          <meshStandardMaterial color="#9d7b42" metalness={0.66} roughness={0.32} />
+        </mesh>
+        <group position={[1.12, -1.46, 0.86]}><Wheel /></group>
       </group>
       <group ref={caster} position={[0, 0, 0]}>
-        <group position={[-1.58, -2.15, 0.58]}><Caster /></group>
+        <group position={[-1.58, -2.06, 0.58]}><Caster /></group>
       </group>
     </group>
   );
