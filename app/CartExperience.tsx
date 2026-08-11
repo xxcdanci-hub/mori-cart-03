@@ -6,6 +6,7 @@ import type { RefObject } from "react";
 import * as THREE from "three";
 
 type ProgressRef = { current: number };
+type PointerRef = { current: { x: number; y: number } };
 
 const CHAPTERS = [
   {
@@ -38,6 +39,24 @@ const CHAPTERS = [
     title: "看得见结构，\n也看得见长久。",
     body: "每个部件回到原位，形成完整推车。清楚的连接逻辑意味着更容易维护，也更适合长久使用。",
   },
+] as const;
+
+const DESKTOP_FOCUS = [
+  { y: -0.2, scale: 0.82 },
+  { y: -0.88, scale: 0.97 },
+  { y: -0.38, scale: 0.93 },
+  { y: 0.12, scale: 0.99 },
+  { y: 0.72, scale: 1.07 },
+  { y: -0.05, scale: 0.88 },
+] as const;
+
+const MOBILE_FOCUS = [
+  { y: 0.72, scale: 0.7 },
+  { y: 0.28, scale: 0.78 },
+  { y: 0.62, scale: 0.75 },
+  { y: 0.88, scale: 0.79 },
+  { y: 1.18, scale: 0.84 },
+  { y: 0.72, scale: 0.72 },
 ] as const;
 
 function clamp01(value: number) {
@@ -86,6 +105,37 @@ function useStoryProgress(storyRef: RefObject<HTMLElement | null>) {
   }, [storyRef]);
 
   return { progressRef, activeChapter };
+}
+
+function usePointerTracking() {
+  const pointerRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const finePointer = window.matchMedia("(pointer: fine)");
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (!finePointer.matches || event.pointerType === "touch") return;
+      pointerRef.current.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointerRef.current.y = (event.clientY / window.innerHeight) * 2 - 1;
+    };
+
+    const resetPointer = () => {
+      pointerRef.current.x = 0;
+      pointerRef.current.y = 0;
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("blur", resetPointer);
+    document.documentElement.addEventListener("pointerleave", resetPointer);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("blur", resetPointer);
+      document.documentElement.removeEventListener("pointerleave", resetPointer);
+    };
+  }, []);
+
+  return pointerRef;
 }
 
 function WoodShelf({ width = 3.8, depth = 1.6 }: { width?: number; depth?: number }) {
@@ -210,7 +260,7 @@ function Caster() {
   );
 }
 
-function CartModel({ progressRef }: { progressRef: ProgressRef }) {
+function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; pointerRef: PointerRef }) {
   const root = useRef<THREE.Group>(null);
   const rail = useRef<THREE.Group>(null);
   const topShelf = useRef<THREE.Group>(null);
@@ -243,22 +293,33 @@ function CartModel({ progressRef }: { progressRef: ProgressRef }) {
     const frameT = smoothRange(p, 0.72, 0.86) * returnFactor;
     const damping = reducedMotion.current ? 40 : 8;
     const isMobile = viewportWidth < 900;
+    const chapterPosition = p * CHAPTERS.length;
+    const chapterIndex = Math.min(CHAPTERS.length - 1, Math.floor(chapterPosition));
+    const chapterProgress = chapterIndex === CHAPTERS.length - 1 ? clamp01(chapterPosition - chapterIndex) : chapterPosition - chapterIndex;
+    const focus = (isMobile ? MOBILE_FOCUS : DESKTOP_FOCUS)[chapterIndex];
+    const previousFocus = (isMobile ? MOBILE_FOCUS : DESKTOP_FOCUS)[Math.max(0, chapterIndex - 1)];
+    const focusArrival = reducedMotion.current ? 1 : smoothRange(chapterProgress, 0.04, 0.28);
+    const entryScale = chapterIndex === 0 ? focus.scale : focus.scale - (isMobile ? 0.055 : 0.085);
+    const focusScale = THREE.MathUtils.lerp(entryScale, focus.scale, focusArrival);
+    const focusY = THREE.MathUtils.lerp(previousFocus.y, focus.y, focusArrival);
+    const pointerX = isMobile || reducedMotion.current ? 0 : pointerRef.current.x;
+    const pointerY = isMobile || reducedMotion.current ? 0 : pointerRef.current.y;
 
     if (root.current) {
-      const targetX = isMobile ? 0 : p < 0.14 ? 1.45 : -1.22;
-      const targetY = isMobile ? 0.72 : -0.2;
-      const targetScale = isMobile ? 0.7 : 0.82;
+      const targetX = (isMobile ? 0 : chapterIndex === 0 ? 1.45 : -1.22) + pointerX * 0.16;
+      const targetY = focusY - pointerY * 0.1;
+      const targetScale = focusScale;
       root.current.position.x = THREE.MathUtils.damp(root.current.position.x, targetX, damping, delta);
       root.current.position.y = THREE.MathUtils.damp(root.current.position.y, targetY, damping, delta);
       const nextScale = THREE.MathUtils.damp(root.current.scale.x, targetScale, damping, delta);
       root.current.scale.setScalar(nextScale);
       root.current.rotation.y = THREE.MathUtils.damp(
         root.current.rotation.y,
-        -0.34 + p * 0.65 + (reducedMotion.current ? 0 : Math.sin(state.clock.elapsedTime * 0.35) * 0.025),
+        -0.34 + p * 0.65 + pointerX * 0.17 + (reducedMotion.current ? 0 : Math.sin(state.clock.elapsedTime * 0.35) * 0.025),
         damping,
         delta,
       );
-      root.current.rotation.x = THREE.MathUtils.damp(root.current.rotation.x, -0.06 + p * 0.08, damping, delta);
+      root.current.rotation.x = THREE.MathUtils.damp(root.current.rotation.x, -0.06 + p * 0.08 - pointerY * 0.07, damping, delta);
     }
     if (rail.current) {
       rail.current.position.y = THREE.MathUtils.damp(rail.current.position.y, railT * 1.25, damping, delta);
@@ -338,7 +399,7 @@ function CartModel({ progressRef }: { progressRef: ProgressRef }) {
   );
 }
 
-function Scene({ progressRef }: { progressRef: ProgressRef }) {
+function Scene({ progressRef, pointerRef }: { progressRef: ProgressRef; pointerRef: PointerRef }) {
   return (
     <>
       <color attach="background" args={["#d7b982"]} />
@@ -348,7 +409,7 @@ function Scene({ progressRef }: { progressRef: ProgressRef }) {
       <directionalLight position={[5, 2, 4]} intensity={1.4} color="#e4b56c" />
       <spotLight position={[0, 7, -2]} angle={0.7} penumbra={0.8} intensity={2.2} color="#fff4d7" />
       <Suspense fallback={null}>
-        <CartModel progressRef={progressRef} />
+        <CartModel progressRef={progressRef} pointerRef={pointerRef} />
       </Suspense>
       <mesh position={[0, -2.42, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[18, 18]} />
@@ -361,6 +422,7 @@ function Scene({ progressRef }: { progressRef: ProgressRef }) {
 export default function CartExperience() {
   const storyRef = useRef<HTMLElement>(null);
   const { progressRef, activeChapter } = useStoryProgress(storyRef);
+  const pointerRef = usePointerTracking();
   const chapter = CHAPTERS[activeChapter];
 
   return (
@@ -382,7 +444,7 @@ export default function CartExperience() {
               shadows
               gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
             >
-              <Scene progressRef={progressRef} />
+              <Scene progressRef={progressRef} pointerRef={pointerRef} />
             </Canvas>
           </div>
 
