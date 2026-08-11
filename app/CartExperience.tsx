@@ -100,6 +100,7 @@ function useStoryProgress(
       const scrollable = Math.max(1, scroller.scrollWidth - scroller.clientWidth);
       const next = clamp01(scroller.scrollLeft / scrollable);
       progressRef.current = next;
+      storyRef.current?.style.setProperty("--story-progress", String(next));
 
       const chapter = Math.min(CHAPTERS.length - 1, Math.round(next * (CHAPTERS.length - 1)));
       setActiveChapter((current) => (current === chapter ? current : chapter));
@@ -356,7 +357,9 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
     const pointerY = isMobile || reducedMotion.current ? 0 : pointerRef.current.y;
 
     if (root.current) {
-      const targetX = (isMobile ? 0 : chapterIndex === 0 ? 1.45 : -1.22) + pointerX * 0.16;
+      const routeStart = isMobile ? -0.58 : -1.72;
+      const routeEnd = isMobile ? 0.58 : 1.72;
+      const targetX = THREE.MathUtils.lerp(routeStart, routeEnd, p) + pointerX * 0.12;
       const targetY = focusY - pointerY * 0.1;
       const targetScale = focusScale;
       root.current.position.x = THREE.MathUtils.damp(root.current.position.x, targetX, damping, delta);
@@ -403,7 +406,7 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
   });
 
   return (
-    <group ref={root} scale={0.82} position={[1.45, -0.2, 0]}>
+    <group ref={root} scale={0.82} position={[-1.72, -0.2, 0]}>
       <group ref={rail} position={[0, 0, 0]}>
         <BrassRod position={[-1.74, 2.08, -0.64]} length={1.28} />
         <BrassRod position={[1.74, 2.08, -0.64]} length={1.28} />
@@ -569,8 +572,14 @@ export default function CartExperience() {
           </nav>
 
           <div className="scroll-prompt" aria-hidden="true">
-            <span>SCROLL SIDEWAYS TO EXPLORE</span>
+            <span>从左向右 · 推动查看结构</span>
             <i />
+          </div>
+
+          <div className="push-route" aria-hidden="true">
+            <span>START</span>
+            <i><b /></i>
+            <span>FINISH</span>
           </div>
         </div>
       </section>
