@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import type { RefObject } from "react";
+import type { KeyboardEvent, RefObject } from "react";
 import * as THREE from "three";
 
 type ProgressRef = { current: number };
@@ -12,32 +12,44 @@ const CHAPTERS = [
   {
     eyebrow: "MORI CART / 03",
     title: "一台边柜，\n走到生活发生的地方。",
-    body: "胡桃木、藤编与黄铜构成一辆轻巧的移动边柜。向下滑动，从完整形态看进它的结构。",
+    body: "胡桃木、藤编与黄铜构成一辆轻巧的移动边柜。向右滑动，从完整形态看进它的结构。",
+    calloutTitle: "三层结构 / 一体移动",
+    calloutBody: "开放台面、藤编收纳与双轮系统沿同一框架组织，形成完整的使用动线。",
   },
   {
     eyebrow: "01 / TOP RAIL",
     title: "黄铜护栏，\n让移动更从容。",
     body: "细径金属管围合上层台面，瓶罐与器物不会在推行中轻易滑落；后侧把手同时保留舒适握距。",
+    calloutTitle: "细径黄铜管 + 外伸握把",
+    calloutBody: "护栏负责止滑，左侧握把沿车宽方向伸出，推行时手腕不必贴近柜体。",
   },
   {
     eyebrow: "02 / SOLID WOOD",
     title: "两层台面，\n各有自己的节奏。",
     body: "上层适合随手取放，中层承担展示与临时操作。圆润的胡桃木边缘回应日常触碰。",
+    calloutTitle: "上下分层 / 圆角收边",
+    calloutBody: "上层保持高频取放，中层留给展示与操作；木质边缘以小圆角降低磕碰感。",
   },
   {
     eyebrow: "03 / CANE CABINET",
     title: "藤编柜体，\n藏住杂物，留下呼吸。",
     body: "左右分舱收纳让物品保持秩序。通透藤编减轻柜体体量，也让织物与书籍自然通风。",
+    calloutTitle: "双分舱藤编门",
+    calloutBody: "藤编网面降低封闭柜体的视觉重量，同时给织物、书籍保留持续通风。",
   },
   {
     eyebrow: "04 / DUAL WHEELS",
     title: "大轮越过门槛，\n脚轮负责转身。",
     body: "木质主轮提供稳定支撑，前端万向脚轮完成细腻转向。两种轮组分工，让家具真正能够移动。",
+    calloutTitle: "主轮承重 / 脚轮转向",
+    calloutBody: "大轮轴心与右前立柱对齐承担越槛，左前万向脚轮与立柱同轴完成小半径转向。",
   },
   {
     eyebrow: "05 / ASSEMBLY",
     title: "看得见结构，\n也看得见长久。",
     body: "每个部件回到原位，形成完整推车。清楚的连接逻辑意味着更容易维护，也更适合长久使用。",
+    calloutTitle: "轴线归位 / 模组可维护",
+    calloutBody: "层板、柜体、护栏与轮组回到各自连接点，拆装路径清楚，后续维护更直接。",
   },
 ] as const;
 
@@ -70,7 +82,10 @@ function smoothRange(value: number, start: number, end: number) {
   return t * t * (3 - 2 * t);
 }
 
-function useStoryProgress(storyRef: RefObject<HTMLElement | null>) {
+function useStoryProgress(
+  storyRef: RefObject<HTMLElement | null>,
+  scrollerRef: RefObject<HTMLDivElement | null>,
+) {
   const progressRef = useRef(0);
   const [activeChapter, setActiveChapter] = useState(0);
 
@@ -79,15 +94,14 @@ function useStoryProgress(storyRef: RefObject<HTMLElement | null>) {
 
     const update = () => {
       frame = 0;
-      const story = storyRef.current;
-      if (!story) return;
+      const scroller = scrollerRef.current;
+      if (!scroller) return;
 
-      const rect = story.getBoundingClientRect();
-      const scrollable = Math.max(1, rect.height - window.innerHeight);
-      const next = clamp01(-rect.top / scrollable);
+      const scrollable = Math.max(1, scroller.scrollWidth - scroller.clientWidth);
+      const next = clamp01(scroller.scrollLeft / scrollable);
       progressRef.current = next;
 
-      const chapter = Math.min(CHAPTERS.length - 1, Math.floor(next * CHAPTERS.length));
+      const chapter = Math.min(CHAPTERS.length - 1, Math.round(next * (CHAPTERS.length - 1)));
       setActiveChapter((current) => (current === chapter ? current : chapter));
     };
 
@@ -95,16 +109,38 @@ function useStoryProgress(storyRef: RefObject<HTMLElement | null>) {
       if (!frame) frame = requestAnimationFrame(update);
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    const onWheel = (event: WheelEvent) => {
+      const scroller = scrollerRef.current;
+      const story = storyRef.current;
+      if (!scroller || !story) return;
+
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      if (Math.abs(delta) < 0.5) return;
+
+      const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+      const movingForward = delta > 0;
+      const canMove = movingForward ? scroller.scrollLeft < maxScroll - 2 : scroller.scrollLeft > 2;
+
+      if (canMove) {
+        event.preventDefault();
+        scroller.scrollLeft += delta * 1.15;
+      }
+    };
+
+    const scroller = scrollerRef.current;
+    const story = storyRef.current;
+    scroller?.addEventListener("scroll", onScroll, { passive: true });
+    story?.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("resize", onScroll, { passive: true });
     update();
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      scroller?.removeEventListener("scroll", onScroll);
+      story?.removeEventListener("wheel", onWheel);
       window.removeEventListener("resize", onScroll);
       if (frame) cancelAnimationFrame(frame);
     };
-  }, [storyRef]);
+  }, [scrollerRef, storyRef]);
 
   return { progressRef, activeChapter };
 }
@@ -307,9 +343,9 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
     const frameT = smoothRange(p, 0.72, 0.86) * returnFactor;
     const damping = reducedMotion.current ? 40 : 8;
     const isMobile = viewportWidth < 900;
-    const chapterPosition = p * CHAPTERS.length;
-    const chapterIndex = Math.min(CHAPTERS.length - 1, Math.floor(chapterPosition));
-    const chapterProgress = chapterIndex === CHAPTERS.length - 1 ? clamp01(chapterPosition - chapterIndex) : chapterPosition - chapterIndex;
+    const chapterPosition = p * (CHAPTERS.length - 1);
+    const chapterIndex = Math.min(CHAPTERS.length - 1, Math.round(chapterPosition));
+    const chapterProgress = chapterIndex === 0 ? 1 : clamp01((chapterPosition - chapterIndex + 0.5) * 2);
     const focus = (isMobile ? MOBILE_FOCUS : DESKTOP_FOCUS)[chapterIndex];
     const previousFocus = (isMobile ? MOBILE_FOCUS : DESKTOP_FOCUS)[Math.max(0, chapterIndex - 1)];
     const focusArrival = reducedMotion.current ? 1 : smoothRange(chapterProgress, 0.04, 0.28);
@@ -436,33 +472,37 @@ function Scene({ progressRef, pointerRef }: { progressRef: ProgressRef; pointerR
 
 export default function CartExperience() {
   const storyRef = useRef<HTMLElement>(null);
-  const { progressRef, activeChapter } = useStoryProgress(storyRef);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const { progressRef, activeChapter } = useStoryProgress(storyRef, scrollerRef);
   const pointerRef = usePointerTracking();
-  const chapter = CHAPTERS[activeChapter];
 
   const scrollToChapter = useCallback((index: number) => {
-    const story = storyRef.current;
-    if (!story) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
 
-    const storyTop = window.scrollY + story.getBoundingClientRect().top;
-    const scrollable = Math.max(1, story.offsetHeight - window.innerHeight);
-    const chapterProgress = (index + 0.08) / CHAPTERS.length;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    window.scrollTo({
-      top: storyTop + scrollable * chapterProgress,
+    scroller.scrollTo({
+      left: index * scroller.clientWidth,
       behavior: reducedMotion ? "auto" : "smooth",
     });
   }, []);
+
+  const onScrollerKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    scrollToChapter(Math.min(CHAPTERS.length - 1, Math.max(0, activeChapter + direction)));
+  }, [activeChapter, scrollToChapter]);
 
   return (
     <main>
       <a className="skip-link" href="#details">跳过动态展示</a>
 
-      <section className="cart-story" ref={storyRef} aria-label="MORI 移动边柜拆解展示">
+      <section className="cart-story" id="top" ref={storyRef} aria-label="MORI 移动边柜拆解展示">
         <div className="story-sticky">
           <header className="site-header">
-            <a className="wordmark" href="#top" aria-label="MORI 首页">MORI</a>
+            <a className="wordmark" href="#top" aria-label="MORI 首页" onClick={() => scrollToChapter(0)}>MORI</a>
             <div className="header-note">OBJECTS FOR A MOVING HOME</div>
             <a className="header-link" href="#details">查看规格</a>
           </header>
@@ -478,10 +518,35 @@ export default function CartExperience() {
             </Canvas>
           </div>
 
-          <div className={`chapter chapter-${activeChapter}`} aria-live="polite">
-            <p className="chapter-eyebrow">{chapter.eyebrow}</p>
-            <h1>{chapter.title.split("\n").map((line) => <span key={line}>{line}</span>)}</h1>
-            <p className="chapter-body">{chapter.body}</p>
+          <div
+            className="horizontal-scroller"
+            ref={scrollerRef}
+            tabIndex={0}
+            role="region"
+            aria-label="横向滑动查看推车结构"
+            onKeyDown={onScrollerKeyDown}
+          >
+            <div className="chapter-track">
+              {CHAPTERS.map((item, index) => (
+                <section
+                  className={`chapter-panel chapter-panel-${index}`}
+                  key={item.eyebrow}
+                  aria-label={CHAPTER_LABELS[index]}
+                  aria-current={index === activeChapter ? "step" : undefined}
+                >
+                  <div className={`chapter chapter-${index}`}>
+                    <p className="chapter-eyebrow">{item.eyebrow}</p>
+                    <h1>{item.title.split("\n").map((line) => <span key={line}>{line}</span>)}</h1>
+                    <p className="chapter-body">{item.body}</p>
+                    <aside className="detail-callout">
+                      <i aria-hidden="true" />
+                      <span>{item.calloutTitle}</span>
+                      <p>{item.calloutBody}</p>
+                    </aside>
+                  </div>
+                </section>
+              ))}
+            </div>
           </div>
 
           <nav className="chapter-index" aria-label="结构展示章节">
@@ -504,7 +569,7 @@ export default function CartExperience() {
           </nav>
 
           <div className="scroll-prompt" aria-hidden="true">
-            <span>SCROLL TO DISASSEMBLE</span>
+            <span>SCROLL SIDEWAYS TO EXPLORE</span>
             <i />
           </div>
         </div>
@@ -523,7 +588,7 @@ export default function CartExperience() {
         </div>
         <div className="details-footer">
           <p>这是一份网页交互与 3D 产品展示练习。模型由浏览器实时生成。</p>
-          <a href="#top">重新查看拆解 <span aria-hidden="true">↑</span></a>
+          <a href="#top" onClick={() => scrollToChapter(0)}>重新查看拆解 <span aria-hidden="true">↑</span></a>
         </div>
       </section>
     </main>
