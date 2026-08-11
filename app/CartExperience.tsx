@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import * as THREE from "three";
 
@@ -40,6 +40,8 @@ const CHAPTERS = [
     body: "每个部件回到原位，形成完整推车。清楚的连接逻辑意味着更容易维护，也更适合长久使用。",
   },
 ] as const;
+
+const CHAPTER_LABELS = ["完整形态", "黄铜护栏", "胡桃木层板", "藤编柜体", "双轮系统", "重新组装"] as const;
 
 const DESKTOP_FOCUS = [
   { y: -0.2, scale: 0.82 },
@@ -387,8 +389,8 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
 
       <group ref={frame}>
         {[-1.72, 1.72].flatMap((x) => [-0.62, 0.62].map((z) => (
-          <mesh key={`${x}-${z}`} position={[x, -0.35, z]} castShadow>
-            <cylinderGeometry args={[0.045, 0.045, 3.65, 14]} />
+          <mesh key={`${x}-${z}`} position={[x, -0.05, z]} castShadow>
+            <cylinderGeometry args={[0.045, 0.045, 3.15, 14]} />
             <meshStandardMaterial color="#9d7b42" metalness={0.66} roughness={0.32} />
           </mesh>
         )))}
@@ -399,14 +401,14 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
       <group ref={rightCabinet}><CabinetPod side={1} /></group>
 
       <group ref={bigWheel} name="largeWheelModule" position={[0, 0, 0]}>
-        <mesh position={[1.12, -1.46, 0.71]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <mesh position={[1.72, -1.46, 0.71]} rotation={[Math.PI / 2, 0, 0]} castShadow>
           <cylinderGeometry args={[0.11, 0.11, 0.42, 24]} />
           <meshStandardMaterial color="#9d7b42" metalness={0.66} roughness={0.32} />
         </mesh>
-        <group position={[1.12, -1.46, 0.86]}><Wheel /></group>
+        <group position={[1.72, -1.46, 0.86]}><Wheel /></group>
       </group>
       <group ref={caster} position={[0, 0, 0]}>
-        <group position={[-1.58, -2.06, 0.58]}><Caster /></group>
+        <group position={[-1.72, -2.06, 0.62]}><Caster /></group>
       </group>
     </group>
   );
@@ -438,6 +440,21 @@ export default function CartExperience() {
   const pointerRef = usePointerTracking();
   const chapter = CHAPTERS[activeChapter];
 
+  const scrollToChapter = useCallback((index: number) => {
+    const story = storyRef.current;
+    if (!story) return;
+
+    const storyTop = window.scrollY + story.getBoundingClientRect().top;
+    const scrollable = Math.max(1, story.offsetHeight - window.innerHeight);
+    const chapterProgress = (index + 0.08) / CHAPTERS.length;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    window.scrollTo({
+      top: storyTop + scrollable * chapterProgress,
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
+  }, []);
+
   return (
     <main>
       <a className="skip-link" href="#details">跳过动态展示</a>
@@ -467,11 +484,24 @@ export default function CartExperience() {
             <p className="chapter-body">{chapter.body}</p>
           </div>
 
-          <div className="chapter-index" aria-hidden="true">
+          <nav className="chapter-index" aria-label="结构展示章节">
             <span>{String(activeChapter + 1).padStart(2, "0")}</span>
-            <div className="index-line"><i style={{ transform: `scaleX(${(activeChapter + 1) / CHAPTERS.length})` }} /></div>
+            <div className="chapter-steps">
+              {CHAPTERS.map((item, index) => (
+                <button
+                  key={item.eyebrow}
+                  type="button"
+                  className={index === activeChapter ? "is-active" : undefined}
+                  aria-label={`前往${CHAPTER_LABELS[index]}`}
+                  aria-current={index === activeChapter ? "step" : undefined}
+                  onClick={() => scrollToChapter(index)}
+                >
+                  <i />
+                </button>
+              ))}
+            </div>
             <span>{String(CHAPTERS.length).padStart(2, "0")}</span>
-          </div>
+          </nav>
 
           <div className="scroll-prompt" aria-hidden="true">
             <span>SCROLL TO DISASSEMBLE</span>
