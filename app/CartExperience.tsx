@@ -318,8 +318,8 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
   const middleShelf = useRef<THREE.Group>(null);
   const leftCabinet = useRef<THREE.Group>(null);
   const rightCabinet = useRef<THREE.Group>(null);
-  const bigWheel = useRef<THREE.Group>(null);
-  const caster = useRef<THREE.Group>(null);
+  const bigWheels = useRef<THREE.Group>(null);
+  const casters = useRef<THREE.Group>(null);
   const frame = useRef<THREE.Group>(null);
   const reducedMotion = useRef(false);
   const viewportWidth = useThree((state) => state.size.width);
@@ -394,13 +394,13 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
     }
     if (leftCabinet.current) leftCabinet.current.position.x = THREE.MathUtils.damp(leftCabinet.current.position.x, -cabinetT * 1.05, damping, delta);
     if (rightCabinet.current) rightCabinet.current.position.x = THREE.MathUtils.damp(rightCabinet.current.position.x, cabinetT * 1.05, damping, delta);
-    if (bigWheel.current) {
-      bigWheel.current.position.x = THREE.MathUtils.damp(bigWheel.current.position.x, wheelT * 1.25, damping, delta);
-      bigWheel.current.position.y = THREE.MathUtils.damp(bigWheel.current.position.y, -wheelT * 0.25, damping, delta);
+    if (bigWheels.current) {
+      bigWheels.current.position.x = THREE.MathUtils.damp(bigWheels.current.position.x, wheelT * 1.25, damping, delta);
+      bigWheels.current.position.y = THREE.MathUtils.damp(bigWheels.current.position.y, -wheelT * 0.25, damping, delta);
     }
-    if (caster.current) {
-      caster.current.position.x = THREE.MathUtils.damp(caster.current.position.x, -wheelT * 0.8, damping, delta);
-      caster.current.position.y = THREE.MathUtils.damp(caster.current.position.y, -wheelT * 0.34, damping, delta);
+    if (casters.current) {
+      casters.current.position.x = THREE.MathUtils.damp(casters.current.position.x, -wheelT * 0.8, damping, delta);
+      casters.current.position.y = THREE.MathUtils.damp(casters.current.position.y, -wheelT * 0.34, damping, delta);
     }
     if (frame.current) frame.current.scale.z = THREE.MathUtils.damp(frame.current.scale.z, 1 + frameT * 0.28, damping, delta);
   });
@@ -439,15 +439,27 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
       <group ref={leftCabinet}><CabinetPod side={-1} /></group>
       <group ref={rightCabinet}><CabinetPod side={1} /></group>
 
-      <group ref={bigWheel} name="largeWheelModule" position={[0, 0, 0]}>
-        <mesh position={[1.72, -1.46, 0.71]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.11, 0.11, 0.42, 24]} />
-          <meshStandardMaterial color="#9d7b42" metalness={0.66} roughness={0.32} />
-        </mesh>
-        <group position={[1.72, -1.46, 0.86]}><Wheel /></group>
+      <group ref={bigWheels} name="largeWheelPair" position={[0, 0, 0]}>
+        {([-1, 1] as const).map((zSide) => (
+          <group key={`large-wheel-${zSide}`} name={zSide === 1 ? "largeWheelFront" : "largeWheelRear"}>
+            <mesh position={[1.72, -1.46, zSide * 0.71]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.11, 0.11, 0.42, 24]} />
+              <meshStandardMaterial color="#9d7b42" metalness={0.66} roughness={0.32} />
+            </mesh>
+            <group position={[1.72, -1.46, zSide * 0.86]}><Wheel /></group>
+          </group>
+        ))}
       </group>
-      <group ref={caster} position={[0, 0, 0]}>
-        <group position={[-1.72, -2.06, 0.62]}><Caster /></group>
+      <group ref={casters} name="casterPair" position={[0, 0, 0]}>
+        {([-1, 1] as const).map((zSide) => (
+          <group
+            key={`caster-${zSide}`}
+            name={zSide === 1 ? "casterFront" : "casterRear"}
+            position={[-1.72, -2.06, zSide * 0.62]}
+          >
+            <Caster />
+          </group>
+        ))}
       </group>
     </group>
   );
