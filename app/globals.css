@@ -69,8 +69,21 @@ a {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(90deg, rgba(232, 227, 219, 0.5) 0%, rgba(232, 227, 219, 0.06) 25%, rgba(232, 227, 219, 0.04) 75%, rgba(232, 227, 219, 0.48) 100%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(33, 24, 19, 0.14));
+    linear-gradient(90deg, rgba(226, 220, 210, 0.56) 0%, rgba(232, 227, 219, 0.02) 31%, rgba(232, 227, 219, 0.02) 72%, rgba(226, 220, 210, 0.58) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(33, 24, 19, 0.12));
+}
+
+.story-sticky::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 76px;
+  bottom: 0;
+  left: 30%;
+  right: 30%;
+  border-left: 1px solid rgba(24, 21, 18, 0.11);
+  border-right: 1px solid rgba(24, 21, 18, 0.11);
+  pointer-events: none;
 }
 
 .living-room-backdrop {
@@ -92,18 +105,18 @@ a {
   top: 0;
   left: 0;
   right: 0;
-  height: 76px;
+  height: 68px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 0 3.2vw;
+  padding: 0 2.7vw;
   border-bottom: 1px solid var(--line);
   font-family: var(--font-display), sans-serif;
 }
 
 .wordmark {
   width: max-content;
-  font-size: 21px;
+  font-size: 19px;
   font-weight: 600;
   letter-spacing: 0.22em;
 }
@@ -131,7 +144,7 @@ a {
 .horizontal-scroller {
   position: absolute;
   z-index: 3;
-  inset: 76px 0 0;
+  inset: 68px 0 0;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x proximity;
@@ -175,7 +188,7 @@ a {
 .chapter-copy-layer {
   position: absolute;
   z-index: 4;
-  inset: 76px 0 0;
+  inset: 68px 0 0;
   pointer-events: none;
 }
 
@@ -183,9 +196,9 @@ a {
   position: absolute;
   z-index: 4;
   left: auto;
-  right: 3.2vw;
+  right: 2.7vw;
   top: 50%;
-  width: min(26vw, 400px);
+  width: min(23vw, 356px);
   transform: translateY(-46%);
   opacity: 0;
   visibility: hidden;
@@ -198,7 +211,7 @@ a {
 }
 
 .chapter-eyebrow {
-  margin: 0 0 22px;
+  margin: 0 0 16px;
   padding-left: 52px;
   position: relative;
   font-family: var(--font-display), sans-serif;
@@ -220,10 +233,10 @@ a {
 .chapter h1 {
   margin: 0;
   font-family: var(--font-display), var(--font-body), sans-serif;
-  font-size: clamp(38px, 4vw, 66px);
+  font-size: clamp(36px, 3.55vw, 58px);
   font-weight: 500;
   line-height: 1.04;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.052em;
 }
 
 .chapter h1 span {
@@ -232,16 +245,16 @@ a {
 
 .chapter-body {
   width: 100%;
-  margin: 28px 0 0;
-  font-size: 14px;
-  line-height: 1.85;
+  margin: 20px 0 0;
+  font-size: 13px;
+  line-height: 1.76;
   letter-spacing: 0.02em;
 }
 
 .detail-callout {
   position: relative;
-  margin-top: 24px;
-  padding-top: 14px;
+  margin-top: 18px;
+  padding-top: 11px;
   border-top: 1px solid rgba(47, 29, 21, 0.42);
 }
 
@@ -255,7 +268,7 @@ a {
 
 .detail-callout > p {
   margin: 7px 0 0;
-  font-size: 11px;
+  font-size: 10.5px;
   line-height: 1.65;
   color: rgba(24, 21, 18, 0.72);
 }
@@ -303,19 +316,40 @@ a {
 .chapter-3,
 .chapter-4,
 .chapter-5 {
-  left: 3.2vw;
+  left: 2.7vw;
   right: auto;
   width: min(24vw, 360px);
 }
 
 .chapter:not(.chapter-0) h1 {
-  font-size: clamp(32px, 3.15vw, 52px);
+  font-size: clamp(30px, 2.8vw, 46px);
+}
+
+.catalog-stamp {
+  position: absolute;
+  z-index: 5;
+  left: 2.7vw;
+  top: 96px;
+  display: grid;
+  gap: 5px;
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: 0.15em;
+  color: rgba(24, 21, 18, 0.72);
+}
+
+.catalog-stamp span {
+  font-size: 8px;
+}
+
+.catalog-stamp strong {
+  font-size: 9px;
+  font-weight: 600;
 }
 
 .chapter-index {
   position: absolute;
   z-index: 5;
-  right: 3.2vw;
+  right: 2.7vw;
   bottom: 31px;
   display: flex;
   align-items: center;
@@ -366,7 +400,7 @@ a {
 .scroll-prompt {
   position: absolute;
   z-index: 5;
-  left: 3.2vw;
+  left: 2.7vw;
   bottom: 28px;
   display: flex;
   align-items: center;
@@ -532,6 +566,10 @@ a {
 }
 
 @media (max-width: 900px) {
+  .story-sticky::after {
+    display: none;
+  }
+
   .site-header {
     height: 64px;
     padding: 0 20px;
@@ -555,6 +593,11 @@ a {
 
   .chapter-copy-layer {
     inset: 64px 0 0;
+  }
+
+  .catalog-stamp {
+    top: 78px;
+    left: 20px;
   }
 
   .chapter,

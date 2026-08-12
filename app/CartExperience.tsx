@@ -797,6 +797,11 @@ export default function CartExperience() {
             ))}
           </div>
 
+          <div className="catalog-stamp" aria-hidden="true">
+            <span>COLLECTION 2026</span>
+            <strong>MOBILE FURNITURE / 03</strong>
+          </div>
+
           <nav className="chapter-index" aria-label="结构展示章节">
             <span>{String(activeChapter + 1).padStart(2, "0")}</span>
             <div className="chapter-steps">
