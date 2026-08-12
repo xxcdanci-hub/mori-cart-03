@@ -1,9 +1,10 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, RefObject } from "react";
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 
 type ProgressRef = { current: number };
 type PointerRef = { current: { x: number; y: number } };
@@ -96,6 +97,39 @@ function clamp01(value: number) {
 function smoothRange(value: number, start: number, end: number) {
   const t = clamp01((value - start) / (end - start));
   return t * t * (3 - 2 * t);
+}
+
+function RoundedFurnitureBlock({
+  dimensions,
+  color,
+  radius = 0.05,
+  roughness = 0.5,
+  metalness = 0.01,
+}: {
+  dimensions: [number, number, number];
+  color: string;
+  radius?: number;
+  roughness?: number;
+  metalness?: number;
+}) {
+  const geometry = useMemo(
+    () => new RoundedBoxGeometry(dimensions[0], dimensions[1], dimensions[2], 3, radius),
+    [dimensions[0], dimensions[1], dimensions[2], radius],
+  );
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <mesh geometry={geometry} castShadow receiveShadow>
+      <meshPhysicalMaterial
+        color={color}
+        roughness={roughness}
+        metalness={metalness}
+        clearcoat={metalness < 0.1 ? 0.12 : 0}
+        clearcoatRoughness={0.72}
+      />
+    </mesh>
+  );
 }
 
 function useStoryProgress(
@@ -242,12 +276,14 @@ function usePointerTracking() {
 function WoodShelf({ width = 3.8, depth = 1.6 }: { width?: number; depth?: number }) {
   return (
     <group>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[width, 0.16, depth]} />
-        <meshStandardMaterial color={CART_PALETTE.smokedWalnut} roughness={0.46} metalness={0.01} />
-      </mesh>
+      <RoundedFurnitureBlock
+        dimensions={[width, 0.16, depth]}
+        color={CART_PALETTE.smokedWalnut}
+        radius={0.075}
+        roughness={0.46}
+      />
       <mesh position={[0, 0.085, 0]}>
-        <boxGeometry args={[width - 0.12, 0.018, depth - 0.08]} />
+        <boxGeometry args={[width - 0.18, 0.018, depth - 0.14]} />
         <meshStandardMaterial color={CART_PALETTE.walnutTop} roughness={0.4} />
       </mesh>
       {[-0.43, -0.12, 0.21, 0.49].map((z) => (
@@ -317,19 +353,25 @@ function RattanPanel({ width = 1.2, height = 1.2 }: { width?: number; height?: n
 
 function CabinetPod({ side }: { side: -1 | 1 }) {
   return (
-    <group position={[side * 1.12, -0.74, 0]}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[1.32, 1.35, 1.25]} />
-        <meshStandardMaterial color={CART_PALETTE.smokedWalnut} roughness={0.52} />
-      </mesh>
-      <mesh position={[0, 0.05, 0.63]}>
-        <boxGeometry args={[1.1, 1.08, 0.055]} />
-        <meshStandardMaterial color={CART_PALETTE.walnutDark} roughness={0.6} />
+    <group name={side === -1 ? "leftCaneCabinet" : "rightCaneCabinet"} position={[side * 1.12, -0.74, 0]}>
+      {([-1, 1] as const).map((xSide) => (
+        <group key={`stile-${xSide}`} position={[xSide * 0.59, 0.02, 0]}>
+          <RoundedFurnitureBlock dimensions={[0.14, 1.23, 1.25]} color={CART_PALETTE.smokedWalnut} radius={0.045} roughness={0.5} />
+        </group>
+      ))}
+      {([-1, 1] as const).map((ySide) => (
+        <group key={`rail-${ySide}`} position={[0, ySide * 0.595, 0]}>
+          <RoundedFurnitureBlock dimensions={[1.28, 0.16, 1.25]} color={CART_PALETTE.smokedWalnut} radius={0.045} roughness={0.5} />
+        </group>
+      ))}
+      <mesh name="cabinetBack" position={[0, 0.02, -0.6]} receiveShadow>
+        <boxGeometry args={[1.08, 1.04, 0.045]} />
+        <meshStandardMaterial color={CART_PALETTE.walnutDark} roughness={0.66} />
       </mesh>
       <RattanPanel width={1.05} height={1.02} />
-      <mesh position={[0, -0.73, 0]} castShadow>
-        <boxGeometry args={[1.42, 0.13, 1.34]} />
-        <meshStandardMaterial color={CART_PALETTE.walnutTop} roughness={0.48} />
+      <mesh name="cabinetKnob" position={[-side * 0.43, 0.04, 0.7]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.055, 0.045, 0.09, 18]} />
+        <meshStandardMaterial color={CART_PALETTE.agedBrass} roughness={0.35} metalness={0.7} />
       </mesh>
     </group>
   );
@@ -381,10 +423,7 @@ function PegboardAccessory() {
 
   return (
     <group name="rearPegboard" position={[0.62, 1.92, -0.7]}>
-      <mesh name="pegboardPanel" castShadow receiveShadow>
-        <boxGeometry args={[1.36, 0.68, 0.055]} />
-        <meshStandardMaterial color={CART_PALETTE.olive} roughness={0.76} />
-      </mesh>
+      <RoundedFurnitureBlock dimensions={[1.36, 0.68, 0.055]} color={CART_PALETTE.olive} radius={0.045} roughness={0.76} />
       {holes.map(({ x, y }) => (
         <mesh key={`${x}-${y}`} position={[x, y, 0.031]} name="pegboardHole">
           <circleGeometry args={[0.025, 12]} />
@@ -404,6 +443,40 @@ function PegboardAccessory() {
       <mesh name="brassHook" position={[-0.41, -0.12, 0.13]} rotation={[Math.PI / 2, 0, 0]} castShadow>
         <torusGeometry args={[0.075, 0.014, 8, 18, Math.PI * 1.35]} />
         <meshStandardMaterial color={CART_PALETTE.agedBrass} roughness={0.4} metalness={0.62} />
+      </mesh>
+    </group>
+  );
+}
+
+function Leaf({
+  position,
+  rotation,
+  scale,
+  color,
+}: {
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: [number, number, number];
+  color: string;
+}) {
+  const geometry = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, -1);
+    shape.bezierCurveTo(0.9, -0.55, 0.85, 0.5, 0, 1);
+    shape.bezierCurveTo(-0.85, 0.5, -0.9, -0.55, 0, -1);
+    return new THREE.ShapeGeometry(shape, 12);
+  }, []);
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <group position={position} rotation={rotation} scale={scale}>
+      <mesh name="plantLeaf" geometry={geometry} castShadow>
+        <meshPhysicalMaterial color={color} roughness={0.7} side={THREE.DoubleSide} sheen={0.08} />
+      </mesh>
+      <mesh position={[0, 0, 0.012]}>
+        <boxGeometry args={[0.035, 1.65, 0.012]} />
+        <meshStandardMaterial color={CART_PALETTE.oliveDark} roughness={0.82} />
       </mesh>
     </group>
   );
@@ -434,18 +507,27 @@ function PlantAccessory() {
         </mesh>
       ))}
       {leaves.map((leaf, index) => (
-        <mesh
+        <Leaf
           key={index}
-          name="plantLeaf"
           position={leaf.position}
           rotation={leaf.rotation}
           scale={leaf.scale}
-          castShadow
-        >
-          <sphereGeometry args={[1, 14, 10]} />
-          <meshStandardMaterial color={leaf.color} roughness={0.72} side={THREE.DoubleSide} />
-        </mesh>
+          color={leaf.color}
+        />
       ))}
+    </group>
+  );
+}
+
+function JoineryCollars() {
+  return (
+    <group name="brassJoineryCollars">
+      {[-1.72, 1.72].flatMap((x) => [-0.62, 0.62].flatMap((z) => [-1.42, 0.08, 1.42].map((y) => (
+        <mesh key={`${x}-${y}-${z}`} position={[x, y, z]} castShadow>
+          <cylinderGeometry args={[0.07, 0.07, 0.08, 16]} />
+          <meshStandardMaterial color={CART_PALETTE.agedBrass} roughness={0.32} metalness={0.72} />
+        </mesh>
+      ))))}
     </group>
   );
 }
@@ -575,6 +657,7 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
           </mesh>
         )))}
         <group position={[0, -1.52, 0]}><WoodShelf width={3.95} depth={1.72} /></group>
+        <JoineryCollars />
       </group>
 
       <group ref={leftCabinet}><CabinetPod side={-1} /></group>
