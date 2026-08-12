@@ -8,13 +8,29 @@ import * as THREE from "three";
 type ProgressRef = { current: number };
 type PointerRef = { current: { x: number; y: number } };
 
+const CART_PALETTE = {
+  smokedWalnut: "#664635",
+  walnutTop: "#87634b",
+  walnutGrain: "#3e2b22",
+  walnutDark: "#4b3328",
+  caneBase: "#d2ad70",
+  caneDark: "#8f6b43",
+  caneLight: "#e2c58b",
+  agedBrass: "#9b7b46",
+  olive: "#6f735c",
+  oliveDark: "#4f5c48",
+  leafLight: "#748263",
+  terracotta: "#a8654c",
+  charcoal: "#292824",
+} as const;
+
 const CHAPTERS = [
   {
     eyebrow: "MORI CART / 03",
     title: "一台边柜，\n走到生活发生的地方。",
-    body: "胡桃木、藤编与黄铜构成一辆轻巧的移动边柜。向右滑动，从完整形态看进它的结构。",
-    calloutTitle: "三层结构 / 一体移动",
-    calloutBody: "开放台面、藤编收纳与双轮系统沿同一框架组织，形成完整的使用动线。",
+    body: "烟熏胡桃木、蜂蜜藤编与做旧黄铜构成一辆轻巧的移动边柜。向右滑动，从完整形态看进它的结构。",
+    calloutTitle: "三层结构 / 配件可换",
+    calloutBody: "开放台面、藤编收纳与双轮系统沿同一框架组织，后置洞洞板为常用小物保留了可调节的位置。",
   },
   {
     eyebrow: "01 / TOP RAIL",
@@ -228,16 +244,16 @@ function WoodShelf({ width = 3.8, depth = 1.6 }: { width?: number; depth?: numbe
     <group>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[width, 0.16, depth]} />
-        <meshStandardMaterial color="#50301f" roughness={0.42} metalness={0.02} />
+        <meshStandardMaterial color={CART_PALETTE.smokedWalnut} roughness={0.46} metalness={0.01} />
       </mesh>
       <mesh position={[0, 0.085, 0]}>
         <boxGeometry args={[width - 0.12, 0.018, depth - 0.08]} />
-        <meshStandardMaterial color="#744b31" roughness={0.48} />
+        <meshStandardMaterial color={CART_PALETTE.walnutTop} roughness={0.4} />
       </mesh>
       {[-0.43, -0.12, 0.21, 0.49].map((z) => (
         <mesh key={z} position={[0, 0.098, z]}>
           <boxGeometry args={[width - 0.22, 0.006, 0.012]} />
-          <meshStandardMaterial color="#2f1d15" transparent opacity={0.32} />
+          <meshStandardMaterial color={CART_PALETTE.walnutGrain} transparent opacity={0.24} />
         </mesh>
       ))}
     </group>
@@ -256,7 +272,7 @@ function BrassRod({
   return (
     <mesh position={position} rotation={rotation} castShadow>
       <cylinderGeometry args={[0.035, 0.035, length, 14]} />
-      <meshStandardMaterial color="#aa8748" roughness={0.28} metalness={0.72} />
+      <meshStandardMaterial color={CART_PALETTE.agedBrass} roughness={0.39} metalness={0.62} />
     </mesh>
   );
 }
@@ -267,7 +283,7 @@ function PushHandle() {
       <BrassRod position={[-2.12, 2.72, 0.64]} length={0.82} rotation={[0, 0, Math.PI / 2]} />
       <mesh position={[-2.53, 2.72, 0.64]} rotation={[0, 0, Math.PI / 2]} castShadow>
         <cylinderGeometry args={[0.075, 0.075, 0.54, 18]} />
-        <meshStandardMaterial color="#2f2119" roughness={0.72} />
+        <meshStandardMaterial color={CART_PALETTE.walnutDark} roughness={0.68} />
       </mesh>
     </group>
   );
@@ -281,18 +297,18 @@ function RattanPanel({ width = 1.2, height = 1.2 }: { width?: number; height?: n
     <group position={[0, 0, 0.616]}>
       <mesh position={[0, 0, -0.026]}>
         <planeGeometry args={[width - 0.08, height - 0.08]} />
-        <meshStandardMaterial color="#c79a56" side={THREE.DoubleSide} roughness={0.82} />
+        <meshStandardMaterial color={CART_PALETTE.caneBase} side={THREE.DoubleSide} roughness={0.86} />
       </mesh>
       {verticals.map((x) => (
         <mesh key={`v-${x}`} position={[x, 0, 0]}>
           <boxGeometry args={[0.025, height - 0.12, 0.028]} />
-          <meshStandardMaterial color="#855d32" roughness={0.8} />
+          <meshStandardMaterial color={CART_PALETTE.caneDark} roughness={0.82} />
         </mesh>
       ))}
       {horizontals.map((y) => (
         <mesh key={`h-${y}`} position={[0, y, 0.018]}>
           <boxGeometry args={[width - 0.12, 0.022, 0.026]} />
-          <meshStandardMaterial color="#e0b96d" roughness={0.78} />
+          <meshStandardMaterial color={CART_PALETTE.caneLight} roughness={0.78} />
         </mesh>
       ))}
     </group>
@@ -304,16 +320,16 @@ function CabinetPod({ side }: { side: -1 | 1 }) {
     <group position={[side * 1.12, -0.74, 0]}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[1.32, 1.35, 1.25]} />
-        <meshStandardMaterial color="#382217" roughness={0.5} />
+        <meshStandardMaterial color={CART_PALETTE.smokedWalnut} roughness={0.52} />
       </mesh>
       <mesh position={[0, 0.05, 0.63]}>
         <boxGeometry args={[1.1, 1.08, 0.055]} />
-        <meshStandardMaterial color="#2b1b13" roughness={0.58} />
+        <meshStandardMaterial color={CART_PALETTE.walnutDark} roughness={0.6} />
       </mesh>
       <RattanPanel width={1.05} height={1.02} />
       <mesh position={[0, -0.73, 0]} castShadow>
         <boxGeometry args={[1.42, 0.13, 1.34]} />
-        <meshStandardMaterial color="#5b3824" roughness={0.45} />
+        <meshStandardMaterial color={CART_PALETTE.walnutTop} roughness={0.48} />
       </mesh>
     </group>
   );
@@ -324,15 +340,15 @@ function Wheel({ radius = 0.66 }: { radius?: number }) {
     <group rotation={[Math.PI / 2, 0, 0]}>
       <mesh castShadow receiveShadow>
         <cylinderGeometry args={[radius, radius, 0.18, 48]} />
-        <meshStandardMaterial color="#3c2419" roughness={0.4} />
+        <meshStandardMaterial color={CART_PALETTE.smokedWalnut} roughness={0.42} />
       </mesh>
       <mesh position={[0, 0.1, 0]}>
         <torusGeometry args={[radius * 0.68, 0.032, 10, 48]} />
-        <meshStandardMaterial color="#17110e" roughness={0.55} />
+        <meshStandardMaterial color={CART_PALETTE.charcoal} roughness={0.6} />
       </mesh>
       <mesh position={[0, 0.105, 0]}>
         <cylinderGeometry args={[radius * 0.18, radius * 0.18, 0.035, 32]} />
-        <meshStandardMaterial color="#69442b" roughness={0.38} />
+        <meshStandardMaterial color={CART_PALETTE.walnutTop} roughness={0.4} />
       </mesh>
     </group>
   );
@@ -353,6 +369,83 @@ function Caster() {
         <cylinderGeometry args={[0.075, 0.075, 0.17, 18]} />
         <meshStandardMaterial color="#b6afa0" roughness={0.25} metalness={0.7} />
       </mesh>
+    </group>
+  );
+}
+
+function PegboardAccessory() {
+  const holes = Array.from({ length: 18 }, (_, index) => ({
+    x: -0.54 + (index % 6) * 0.215,
+    y: -0.22 + Math.floor(index / 6) * 0.22,
+  }));
+
+  return (
+    <group name="rearPegboard" position={[0.62, 1.92, -0.7]}>
+      <mesh name="pegboardPanel" castShadow receiveShadow>
+        <boxGeometry args={[1.36, 0.68, 0.055]} />
+        <meshStandardMaterial color={CART_PALETTE.olive} roughness={0.76} />
+      </mesh>
+      {holes.map(({ x, y }) => (
+        <mesh key={`${x}-${y}`} position={[x, y, 0.031]} name="pegboardHole">
+          <circleGeometry args={[0.025, 12]} />
+          <meshStandardMaterial color={CART_PALETTE.walnutDark} roughness={0.85} />
+        </mesh>
+      ))}
+      {[-0.34, 0.32].map((x) => (
+        <mesh key={x} name="woodPeg" position={[x, 0.11, 0.12]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.026, 0.026, 0.22, 12]} />
+          <meshStandardMaterial color={CART_PALETTE.walnutTop} roughness={0.54} />
+        </mesh>
+      ))}
+      <mesh name="pegboardShelf" position={[0.22, -0.15, 0.16]} castShadow>
+        <boxGeometry args={[0.62, 0.06, 0.28]} />
+        <meshStandardMaterial color={CART_PALETTE.walnutTop} roughness={0.5} />
+      </mesh>
+      <mesh name="brassHook" position={[-0.41, -0.12, 0.13]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <torusGeometry args={[0.075, 0.014, 8, 18, Math.PI * 1.35]} />
+        <meshStandardMaterial color={CART_PALETTE.agedBrass} roughness={0.4} metalness={0.62} />
+      </mesh>
+    </group>
+  );
+}
+
+function PlantAccessory() {
+  const leaves = [
+    { position: [-0.18, 0.66, 0], rotation: [0.12, 0, 0.55], scale: [0.16, 0.34, 0.07], color: CART_PALETTE.oliveDark },
+    { position: [0.18, 0.72, 0.01], rotation: [-0.08, 0, -0.58], scale: [0.17, 0.36, 0.07], color: CART_PALETTE.leafLight },
+    { position: [-0.08, 0.93, -0.02], rotation: [0.18, 0, 0.25], scale: [0.15, 0.32, 0.065], color: CART_PALETTE.leafLight },
+    { position: [0.08, 1.02, 0], rotation: [-0.1, 0, -0.22], scale: [0.14, 0.3, 0.065], color: CART_PALETTE.oliveDark },
+  ] as const;
+
+  return (
+    <group name="pottedPlant" position={[-0.98, 1.58, -0.24]} scale={0.82}>
+      <mesh name="terracottaPot" position={[0, 0.16, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.21, 0.16, 0.32, 24]} />
+        <meshStandardMaterial color={CART_PALETTE.terracotta} roughness={0.78} />
+      </mesh>
+      <mesh position={[0, 0.34, 0]}>
+        <cylinderGeometry args={[0.18, 0.18, 0.045, 24]} />
+        <meshStandardMaterial color={CART_PALETTE.walnutGrain} roughness={0.92} />
+      </mesh>
+      {[-0.11, 0, 0.11].map((x, index) => (
+        <mesh key={x} name="plantStem" position={[x, 0.64 + index * 0.08, 0]} rotation={[0, 0, (index - 1) * 0.16]}>
+          <cylinderGeometry args={[0.012, 0.017, 0.68 + index * 0.08, 8]} />
+          <meshStandardMaterial color={CART_PALETTE.oliveDark} roughness={0.78} />
+        </mesh>
+      ))}
+      {leaves.map((leaf, index) => (
+        <mesh
+          key={index}
+          name="plantLeaf"
+          position={leaf.position}
+          rotation={leaf.rotation}
+          scale={leaf.scale}
+          castShadow
+        >
+          <sphereGeometry args={[1, 14, 10]} />
+          <meshStandardMaterial color={leaf.color} roughness={0.72} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -463,10 +556,12 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
         <BrassRod position={[-1.74, 2.72, 0]} length={1.28} rotation={[Math.PI / 2, 0, 0]} />
         <BrassRod position={[1.74, 2.72, 0]} length={1.28} rotation={[Math.PI / 2, 0, 0]} />
         <PushHandle />
+        <PegboardAccessory />
       </group>
 
       <group ref={topShelf} position={[0, 0, 0]}>
         <group position={[0, 1.5, 0]}><WoodShelf /></group>
+        <PlantAccessory />
       </group>
       <group ref={middleShelf} position={[0, 0, 0]}>
         <group position={[0, 0.15, 0]}><WoodShelf width={3.95} depth={1.72} /></group>
@@ -476,7 +571,7 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
         {[-1.72, 1.72].flatMap((x) => [-0.62, 0.62].map((z) => (
           <mesh key={`${x}-${z}`} position={[x, -0.05, z]} castShadow>
             <cylinderGeometry args={[0.045, 0.045, 3.15, 14]} />
-            <meshStandardMaterial color="#9d7b42" metalness={0.66} roughness={0.32} />
+            <meshStandardMaterial color={CART_PALETTE.agedBrass} metalness={0.62} roughness={0.39} />
           </mesh>
         )))}
         <group position={[0, -1.52, 0]}><WoodShelf width={3.95} depth={1.72} /></group>
@@ -490,7 +585,7 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
           <group key={`large-wheel-${zSide}`} name={zSide === 1 ? "largeWheelFront" : "largeWheelRear"}>
             <mesh position={[1.72, -1.46, zSide * 0.71]} rotation={[Math.PI / 2, 0, 0]} castShadow>
               <cylinderGeometry args={[0.11, 0.11, 0.42, 24]} />
-              <meshStandardMaterial color="#9d7b42" metalness={0.66} roughness={0.32} />
+              <meshStandardMaterial color={CART_PALETTE.agedBrass} metalness={0.62} roughness={0.39} />
             </mesh>
             <group position={[1.72, -1.46, zSide * 0.86]}><Wheel /></group>
           </group>
