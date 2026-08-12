@@ -4,12 +4,12 @@
   /* Palette sampled deliberately from the supplied walnut, cane and brass reference. unslop-ignore */
   --font-display: "Avenir Next", "Trebuchet MS", sans-serif;
   --font-body: "PingFang SC", "Microsoft YaHei", sans-serif;
-  --plywood: #d7b982;
-  --paper: #f0e7d6;
-  --walnut: #2f1d15;
-  --brass: #8f6d37;
-  --ink: #24170f;
-  --line: rgba(47, 29, 21, 0.28);
+  --plywood: #e8e3db;
+  --paper: #f4f1eb;
+  --walnut: #211813;
+  --brass: #96703a;
+  --ink: #181512;
+  --line: rgba(24, 21, 18, 0.24);
 }
 
 * {
@@ -69,8 +69,8 @@ a {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(90deg, rgba(215, 185, 130, 0.48) 0%, rgba(215, 185, 130, 0.08) 28%, rgba(215, 185, 130, 0.06) 72%, rgba(215, 185, 130, 0.46) 100%),
-    linear-gradient(180deg, rgba(215, 185, 130, 0.14), rgba(215, 185, 130, 0.3));
+    linear-gradient(90deg, rgba(232, 227, 219, 0.5) 0%, rgba(232, 227, 219, 0.06) 25%, rgba(232, 227, 219, 0.04) 75%, rgba(232, 227, 219, 0.48) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(33, 24, 19, 0.14));
 }
 
 .living-room-backdrop {
@@ -82,7 +82,7 @@ a {
   background-image: url("../hero-living-room-v1.jpg");
   background-position: center center;
   background-size: cover;
-  filter: saturate(0.72) contrast(0.9) brightness(0.94);
+  filter: saturate(0.84) contrast(1.02) brightness(0.93);
   transform: scale(1.012);
 }
 
@@ -134,10 +134,18 @@ a {
   inset: 76px 0 0;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
   touch-action: pan-x pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.horizontal-scroller.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
 }
 
 .horizontal-scroller::-webkit-scrollbar {
@@ -161,7 +169,14 @@ a {
   width: 100vw;
   height: 100%;
   scroll-snap-align: start;
-  scroll-snap-stop: always;
+  scroll-snap-stop: normal;
+}
+
+.chapter-copy-layer {
+  position: absolute;
+  z-index: 4;
+  inset: 76px 0 0;
+  pointer-events: none;
 }
 
 .chapter {
@@ -172,6 +187,14 @@ a {
   top: 50%;
   width: min(26vw, 400px);
   transform: translateY(-46%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 180ms ease;
+}
+
+.chapter.is-active {
+  opacity: 1;
+  visibility: visible;
 }
 
 .chapter-eyebrow {
@@ -234,7 +257,7 @@ a {
   margin: 7px 0 0;
   font-size: 11px;
   line-height: 1.65;
-  color: rgba(36, 23, 15, 0.72);
+  color: rgba(24, 21, 18, 0.72);
 }
 
 .detail-callout > i {
@@ -367,7 +390,7 @@ a {
   font-family: var(--font-display), sans-serif;
   font-size: 8px;
   letter-spacing: 0.16em;
-  color: rgba(36, 23, 15, 0.62);
+  color: rgba(24, 21, 18, 0.62);
 }
 
 .push-route > i {
@@ -437,7 +460,7 @@ a {
 .details {
   min-height: 100svh;
   padding: 10vw 5.5vw 4vw;
-  background: var(--walnut);
+  background: #211b17;
   color: var(--paper);
   display: grid;
   grid-template-columns: 0.85fr 1.15fr;
@@ -449,7 +472,7 @@ a {
   font-family: var(--font-display), sans-serif;
   font-size: 11px;
   letter-spacing: 0.18em;
-  color: #c8a96d;
+  color: #bf985d;
 }
 
 .details h2 {
@@ -476,7 +499,7 @@ a {
 
 .spec-table span {
   font-size: 12px;
-  color: #c8a96d;
+  color: #bf985d;
 }
 
 .spec-table strong {
@@ -523,10 +546,14 @@ a {
 
   .living-room-backdrop {
     background-position: 56% center;
-    filter: saturate(0.68) contrast(0.88) brightness(0.92);
+    filter: saturate(0.8) contrast(1) brightness(0.91);
   }
 
   .horizontal-scroller {
+    inset: 64px 0 0;
+  }
+
+  .chapter-copy-layer {
     inset: 64px 0 0;
   }
 
@@ -651,4 +678,5 @@ a {
   html { scroll-behavior: auto; }
   .scroll-prompt i::after { animation: none; transform: translate(0, -50%); }
   .chapter-steps i { transition: none; }
+  .chapter { transition: none; }
 }

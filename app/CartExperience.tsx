@@ -91,6 +91,9 @@ function useStoryProgress(
 
   useEffect(() => {
     let frame = 0;
+    let dragStartX = 0;
+    let dragStartScroll = 0;
+    let dragging = false;
 
     const update = () => {
       frame = 0;
@@ -115,7 +118,13 @@ function useStoryProgress(
       const story = storyRef.current;
       if (!scroller || !story) return;
 
-      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      const rawDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? 18
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? scroller.clientWidth
+          : 1;
+      const delta = rawDelta * unit;
       if (Math.abs(delta) < 0.5) return;
 
       const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
@@ -124,19 +133,56 @@ function useStoryProgress(
 
       if (canMove) {
         event.preventDefault();
-        scroller.scrollLeft += delta * 1.15;
+        const responsiveDelta = Math.sign(delta) * Math.max(26, Math.abs(delta) * 2.6);
+        scroller.scrollLeft += responsiveDelta;
       }
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      const scroller = scrollerRef.current;
+      if (!scroller || event.pointerType === "touch" || event.button !== 0) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("button, a")) return;
+
+      dragging = true;
+      dragStartX = event.clientX;
+      dragStartScroll = scroller.scrollLeft;
+      scroller.classList.add("is-dragging");
+      scroller.setPointerCapture(event.pointerId);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      const scroller = scrollerRef.current;
+      if (!scroller || !dragging) return;
+      event.preventDefault();
+      scroller.scrollLeft = dragStartScroll - (event.clientX - dragStartX) * 1.45;
+    };
+
+    const stopDragging = (event: PointerEvent) => {
+      const scroller = scrollerRef.current;
+      if (!scroller || !dragging) return;
+      dragging = false;
+      scroller.classList.remove("is-dragging");
+      if (scroller.hasPointerCapture(event.pointerId)) scroller.releasePointerCapture(event.pointerId);
     };
 
     const scroller = scrollerRef.current;
     const story = storyRef.current;
     scroller?.addEventListener("scroll", onScroll, { passive: true });
+    scroller?.addEventListener("pointerdown", onPointerDown);
+    scroller?.addEventListener("pointermove", onPointerMove);
+    scroller?.addEventListener("pointerup", stopDragging);
+    scroller?.addEventListener("pointercancel", stopDragging);
     story?.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("resize", onScroll, { passive: true });
     update();
 
     return () => {
       scroller?.removeEventListener("scroll", onScroll);
+      scroller?.removeEventListener("pointerdown", onPointerDown);
+      scroller?.removeEventListener("pointermove", onPointerMove);
+      scroller?.removeEventListener("pointerup", stopDragging);
+      scroller?.removeEventListener("pointercancel", stopDragging);
       story?.removeEventListener("wheel", onWheel);
       window.removeEventListener("resize", onScroll);
       if (frame) cancelAnimationFrame(frame);
@@ -468,11 +514,11 @@ function CartModel({ progressRef, pointerRef }: { progressRef: ProgressRef; poin
 function Scene({ progressRef, pointerRef }: { progressRef: ProgressRef; pointerRef: PointerRef }) {
   return (
     <>
-      <fog attach="fog" args={["#d7b982", 9, 17]} />
-      <ambientLight intensity={1.7} color="#fff0d3" />
-      <directionalLight position={[-4, 7, 5]} intensity={3.8} color="#fff0d0" castShadow shadow-mapSize={[1024, 1024]} />
-      <directionalLight position={[5, 2, 4]} intensity={1.4} color="#e4b56c" />
-      <spotLight position={[0, 7, -2]} angle={0.7} penumbra={0.8} intensity={2.2} color="#fff4d7" />
+      <fog attach="fog" args={["#e8e3db", 9, 17]} />
+      <ambientLight intensity={1.85} color="#fff8ec" />
+      <directionalLight position={[-4, 7, 5]} intensity={3.7} color="#fff4df" castShadow shadow-mapSize={[1024, 1024]} />
+      <directionalLight position={[5, 2, 4]} intensity={1.15} color="#d9bd91" />
+      <spotLight position={[0, 7, -2]} angle={0.7} penumbra={0.8} intensity={1.8} color="#fff8e8" />
       <Suspense fallback={null}>
         <CartModel progressRef={progressRef} pointerRef={pointerRef} />
       </Suspense>
@@ -549,20 +595,28 @@ export default function CartExperience() {
                   key={item.eyebrow}
                   aria-label={CHAPTER_LABELS[index]}
                   aria-current={index === activeChapter ? "step" : undefined}
-                >
-                  <div className={`chapter chapter-${index}`}>
-                    <p className="chapter-eyebrow">{item.eyebrow}</p>
-                    <h1>{item.title.split("\n").map((line) => <span key={line}>{line}</span>)}</h1>
-                    <p className="chapter-body">{item.body}</p>
-                    <aside className="detail-callout">
-                      <i aria-hidden="true" />
-                      <span>{item.calloutTitle}</span>
-                      <p>{item.calloutBody}</p>
-                    </aside>
-                  </div>
-                </section>
+                />
               ))}
             </div>
+          </div>
+
+          <div className="chapter-copy-layer" aria-live="polite">
+            {CHAPTERS.map((item, index) => (
+              <div
+                className={`chapter chapter-${index}${index === activeChapter ? " is-active" : ""}`}
+                key={item.eyebrow}
+                aria-hidden={index !== activeChapter}
+              >
+                <p className="chapter-eyebrow">{item.eyebrow}</p>
+                <h1>{item.title.split("\n").map((line) => <span key={line}>{line}</span>)}</h1>
+                <p className="chapter-body">{item.body}</p>
+                <aside className="detail-callout">
+                  <i aria-hidden="true" />
+                  <span>{item.calloutTitle}</span>
+                  <p>{item.calloutBody}</p>
+                </aside>
+              </div>
+            ))}
           </div>
 
           <nav className="chapter-index" aria-label="结构展示章节">
